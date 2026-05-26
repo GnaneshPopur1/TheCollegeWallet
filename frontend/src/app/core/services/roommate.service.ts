@@ -27,7 +27,7 @@ export interface SharedExpense {
   amount: number;
   description: string;
   date: string;
-  payer?: { email: string };
+  payer?: { email: string, venmo_handle?: string };
   Splits?: ExpenseSplit[];
 }
 

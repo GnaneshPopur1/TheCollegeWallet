@@ -8,6 +8,8 @@ export interface User {
   password?: string;
   name?: string;
   round_up_balance?: number;
+  venmo_handle?: string;
+  is_email_verified?: boolean;
 }
 
 export interface AuthResponse {
@@ -54,6 +56,19 @@ export class AuthService {
       tap(user => {
         user.name = user.email.split('@')[0];
         this.currentUserSubject.next(user);
+      })
+    );
+  }
+
+  updateVenmoHandle(venmo_handle: string): Observable<User> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    return this.http.put<User>(`${this.apiUrl}/me`, { venmo_handle }, { headers }).pipe(
+      tap(user => {
+        const current = this.currentUserSubject.value;
+        if (current) {
+          this.currentUserSubject.next({ ...current, venmo_handle: user.venmo_handle });
+        }
       })
     );
   }

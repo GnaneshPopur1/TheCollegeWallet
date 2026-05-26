@@ -6,6 +6,11 @@
   <button class="btn-primary" (click)="connectBank()">Connect Bank</button>
 </div>
 
+<div *ngIf="!isEmailVerified" style="background-color: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 4px; margin-bottom: 2rem;">
+  <div style="color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem;">Verify your email</div>
+  <div style="font-size: 0.9rem; color: var(--text-secondary);">Check your console logs (mock email) to click the verification link and secure your account.</div>
+</div>
+
 <div class="dashboard-grid">
   <!-- Net Worth -->
   <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
@@ -49,6 +54,21 @@
     <div class="trend text-muted">From transaction spare change</div>
     <button class="btn-primary" (click)="simulateRoundUps()" [disabled]="isSimulatingRoundUps" style="margin-top: 1rem; width: 100%; padding: 0.5rem; font-size: 0.85rem;">
       {{ isSimulatingRoundUps ? 'Simulating...' : 'Simulate Round-Ups' }}
+    </button>
+  </div>
+  
+  <!-- Profile Settings -->
+  <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
+    <h3>Profile Settings</h3>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label>Venmo Handle</label>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span style="color: var(--text-secondary);">@</span>
+        <input type="text" class="form-control" [(ngModel)]="venmoHandle" placeholder="username" style="flex: 1;" />
+      </div>
+    </div>
+    <button class="btn-primary" (click)="updateVenmo()" [disabled]="isUpdatingVenmo" style="margin-top: auto; width: 100%; padding: 0.5rem; font-size: 0.85rem;">
+      {{ isUpdatingVenmo ? 'Saving...' : 'Save Changes' }}
     </button>
   </div>
 </div>

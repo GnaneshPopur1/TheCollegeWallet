@@ -35,6 +35,7 @@ const creditRoutes = require('./routes/v1/credit.routes');
 const plaidRoutes = require('./routes/v1/plaid.routes');
 const receiptRoutes = require('./routes/v1/receipts.routes');
 const chatRoutes = require('./routes/v1/chat.routes');
+const notificationsRoutes = require('./routes/v1/notifications.routes');
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/connections', connectionRoutes);
@@ -45,6 +46,7 @@ app.use('/api/v1/credit', creditRoutes);
 app.use('/api/v1/plaid', plaidRoutes);
 app.use('/api/v1/receipts', receiptRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/notifications', notificationsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

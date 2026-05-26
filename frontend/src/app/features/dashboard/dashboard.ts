@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AccountService, Account, Transaction } from '../../core/services/account.service';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -10,7 +11,7 @@ import { ChartConfiguration, ChartData } from 'chart.js';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -20,6 +21,9 @@ export class Dashboard implements OnInit {
   netWorth: number = 0;
   roundUpBalance: number = 0;
   isSimulatingRoundUps: boolean = false;
+  isEmailVerified: boolean = true;
+  venmoHandle: string = '';
+  isUpdatingVenmo: boolean = false;
   
   // Line chart properties for Net Worth
   public lineChartData: ChartConfiguration['data'] = {
@@ -81,6 +85,8 @@ export class Dashboard implements OnInit {
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.roundUpBalance = user.round_up_balance || 0;
+        this.isEmailVerified = user.is_email_verified ?? true;
+        this.venmoHandle = user.venmo_handle || '';
       }
     });
 
@@ -116,6 +122,13 @@ export class Dashboard implements OnInit {
       // Callback runs after successful link and sync
       console.log('Bank connected and synced!');
       this.fetchData();
+    });
+  }
+
+  updateVenmo() {
+    this.isUpdatingVenmo = true;
+    this.authService.updateVenmoHandle(this.venmoHandle).subscribe(() => {
+      this.isUpdatingVenmo = false;
     });
   }
 }

@@ -55,6 +55,9 @@
         </div>
         <div class="sub-actions" style="display: flex; align-items: center; gap: 1rem;">
           <span style="font-weight: 600; color: #F44336;">-{{ split.amount_owed | currency }}</span>
+          <a *ngIf="split.expense?.payer?.venmo_handle" 
+             [href]="'venmo://paycharge?txn=pay&recipients=' + split.expense?.payer?.venmo_handle + '&amount=' + split.amount_owed + '&note=' + split.expense?.description" 
+             class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: #3396CD; text-decoration: none;">Venmo</a>
           <button class="btn-primary" (click)="settleUp(split.split_id)" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">Mark Paid</button>
         </div>
       </div>

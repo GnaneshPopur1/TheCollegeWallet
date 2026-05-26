@@ -16,17 +16,32 @@ model User {
   password_hash    String
   mfa_secret       String?
   created_at       DateTime           @default(now())
-  round_up_balance Float              @default(0)
+  round_up_balance   Float              @default(0)
+  venmo_handle       String?
+  is_email_verified  Boolean            @default(false)
+  verification_token String?
   
-  roommate_group_id String?
+  roommate_group_id  String?
   Roommate_Group   Roommate_Group?    @relation(fields: [roommate_group_id], references: [group_id])
   
   Bank_Connections Bank_Connection[]
   Accounts         Account[]
   Academic_Terms   Academic_Term[]
   Credit_Scores    Credit_Score[]
-  Shared_Expenses  Shared_Expense[] @relation("PaidExpenses")
-  Expense_Splits   Expense_Split[]  @relation("OwedSplits")
+  Shared_Expenses    Shared_Expense[] @relation("PaidExpenses")
+  Expense_Splits     Expense_Split[]  @relation("OwedSplits")
+  Push_Subscriptions Push_Subscription[]
+}
+
+model Push_Subscription {
+  sub_id          String   @id @default(uuid())
+  user_id         String
+  endpoint        String
+  p256dh          String
+  auth            String
+  created_at      DateTime @default(now())
+
+  user            User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }
 
 model Bank_Connection {

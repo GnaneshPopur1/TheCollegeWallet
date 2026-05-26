@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { SwPush } from '@angular/service-worker';
 import { AuthService } from './auth.service';
 import { ChatbotComponent } from './shared/components/chatbot/chatbot';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -14,16 +17,41 @@ export class App implements OnInit {
   title = 'TheWallet';
   isDarkTheme = true;
 
-  constructor(public authService: AuthService, private router: Router) {}
+  readonly VAPID_PUBLIC_KEY = "BGGFPOvmB9PP-ZC3WthhNF3t8-4AHqaivta5CDcqILPNT1boj2kwqiX7M0EL2rxJAa0VkTg8rBp1puyZcjUd7Pw";
+
+  constructor(
+    public authService: AuthService, 
+    private router: Router,
+    private swPush: SwPush,
+    private http: HttpClient
+  ) {}
 
   ngOnInit() {
-    this.authService.checkAuthStatus().subscribe();
+    this.authService.checkAuthStatus().subscribe(user => {
+      if (user) {
+        this.subscribeToNotifications();
+      }
+    });
     
     // Load theme from localStorage
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
       this.isDarkTheme = false;
       document.body.classList.add('light-theme');
+    }
+  }
+
+  subscribeToNotifications() {
+    if (this.swPush.isEnabled) {
+      this.swPush.requestSubscription({
+        serverPublicKey: this.VAPID_PUBLIC_KEY
+      })
+      .then(sub => {
+        const token = localStorage.getItem('token');
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        this.http.post(`${environment.apiUrl}/notifications/subscribe`, sub, { headers }).subscribe();
+      })
+      .catch(err => console.error("Could not subscribe to notifications", err));
     }
   }
 

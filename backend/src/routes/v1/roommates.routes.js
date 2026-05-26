@@ -39,7 +39,7 @@ router.get('/group', authenticateToken, async (req, res) => {
     // Get net balances for the user (how much this user owes/is owed)
     const splitsOwedByMe = await prisma.expense_Split.findMany({
       where: { owed_by_user_id: req.user.user_id, is_settled: false },
-      include: { expense: true }
+      include: { expense: { include: { payer: { select: { email: true, venmo_handle: true } } } } }
     });
 
     const splitsOwedToMe = await prisma.expense_Split.findMany({
