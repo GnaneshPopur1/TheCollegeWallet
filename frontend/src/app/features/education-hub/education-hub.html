@@ -1,0 +1,54 @@
+<div class="dashboard-header">
+  <h1>Education Hub</h1>
+  <p class="subtitle" *ngIf="currentTerm">Your academic financial breakdown for {{ currentTerm.semester_name }}</p>
+  <p class="subtitle" *ngIf="!currentTerm">No academic term data found.</p>
+</div>
+
+<div class="dashboard-grid" *ngIf="currentTerm">
+  <!-- Tuition & Aid -->
+  <div class="glass-panel stat-card">
+    <h3>Tuition & Aid</h3>
+    <div class="metric-value">{{ currentTerm.tuition_total | currency }}</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" [style.width]="tuitionPaidPercent + '%'"></div>
+    </div>
+    <div class="trend text-muted">{{ tuitionPaidPercent }}% Covered by Aid ({{ currentTerm.aid_applied | currency }})</div>
+  </div>
+  
+  <!-- Dining Dollars -->
+  <div class="glass-panel stat-card">
+    <h3>Dining Dollars</h3>
+    <div class="metric-value">{{ currentTerm.dining_dollars_bal | currency }}</div>
+    <div class="trend positive">You are under budget</div>
+  </div>
+  
+  <div class="glass-panel stat-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(230, 81, 0, 0.1), transparent);">
+    <h3>🍔 Dining Dollars Calculator</h3>
+    <p class="text-muted" style="margin-bottom: 1rem;">Based on your semester end date, here is how much you can safely spend on food per day without running out of Dining Dollars.</p>
+    
+    <div style="display: flex; gap: 2rem; align-items: center;">
+      <div>
+        <div class="metric-value" style="font-size: 2.5rem; color: #E65100;">
+          {{ diningData?.safe_daily_spend | currency }}
+        </div>
+        <div class="trend text-muted">Safe Daily Spend</div>
+      </div>
+      
+      <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 2rem;">
+        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">
+          <strong>Total Balance:</strong> {{ diningData?.dining_dollars | currency }}
+        </div>
+        <div style="font-size: 1.2rem;">
+          <strong>Days Remaining:</strong> {{ diningData?.days_remaining }} days
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Student Loans -->
+  <div class="glass-panel stat-card warning-card">
+    <h3>Est. Total Student Debt</h3>
+    <div class="metric-value">$32,500.00</div>
+    <div class="trend text-muted">Federal Subsidized & Unsubsidized</div>
+  </div>
+</div>

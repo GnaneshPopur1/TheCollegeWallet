@@ -1,0 +1,59 @@
+<div class="auth-container">
+  <div class="auth-card glass-panel">
+    <div class="auth-header">
+      <h2>Join TheWallet</h2>
+      <p class="subtitle">Take control of your college finances.</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+      <div class="form-group">
+        <label for="email">College Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          class="form-control"
+          [(ngModel)]="email" 
+          required 
+          placeholder="student@college.edu">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          class="form-control"
+          [(ngModel)]="password" 
+          required 
+          placeholder="Create a strong password">
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input 
+          type="password" 
+          id="confirmPassword" 
+          name="confirmPassword" 
+          class="form-control"
+          [(ngModel)]="confirmPassword" 
+          required 
+          placeholder="Confirm your password">
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn-primary w-100" [disabled]="!registerForm.form.valid || isLoading">
+        <span *ngIf="!isLoading">Create Account</span>
+        <span *ngIf="isLoading">Signing up...</span>
+      </button>
+
+      <div class="auth-footer" style="margin-top: 1.5rem; text-align: center;">
+        <p class="text-muted">Already have an account? <a routerLink="/login" style="color: #4CAF50; text-decoration: none; font-weight: bold;">Sign in</a></p>
+      </div>
+    </form>
+  </div>
+</div>

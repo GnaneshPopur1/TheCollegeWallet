@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id          String             @id @default(uuid())
+  email            String             @unique
+  password_hash    String
+  mfa_secret       String?
+  created_at       DateTime           @default(now())
+  round_up_balance Float              @default(0)
+  
+  roommate_group_id String?
+  Roommate_Group   Roommate_Group?    @relation(fields: [roommate_group_id], references: [group_id])
+  
+  Bank_Connections Bank_Connection[]
+  Accounts         Account[]
+  Academic_Terms   Academic_Term[]
+  Credit_Scores    Credit_Score[]
+  Shared_Expenses  Shared_Expense[] @relation("PaidExpenses")
+  Expense_Splits   Expense_Split[]  @relation("OwedSplits")
+}
+
+model Bank_Connection {
+  connection_id    String    @id @default(uuid())
+  user_id          String
+  institution_name String
+  access_token     String    // Encrypted at rest
+  status           String    // active, disconnected, requires_login
+  
+  user             User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  Accounts         Account[]
+}
+
+model Account {
+  account_id       String          @id @default(uuid())
+  user_id          String
+  connection_id    String
+  account_type     String          // checking, savings, credit, student_loan
+  current_balance  Float
+  interest_rate    Float?
+  
+  user             User            @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  connection       Bank_Connection @relation(fields: [connection_id], references: [connection_id], onDelete: Cascade)
+  Transactions     Transaction[]
+}
+
+model Transaction {
+  transaction_id   String   @id @default(uuid())
+  account_id       String
+  amount           Float    // Positive for income, negative for expense
+  merchant_name    String
+  date             DateTime
+  is_recurring     Boolean  @default(false)
+  
+  account          Account  @relation(fields: [account_id], references: [account_id], onDelete: Cascade)
+}
+
+model Academic_Term {
+  term_id            String   @id @default(uuid())
+  user_id            String
+  semester_name      String   // e.g., "Fall 2026"
+  tuition_total      Float
+  aid_applied        Float
+  dining_dollars_bal Float
+  
+  user               User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Credit_Score {
+  record_id        String   @id @default(uuid())
+  user_id          String
+  credit_score     Int
+  provider         String   // e.g., "Equifax", "VantageScore"
+  recorded_at      DateTime @default(now())
+  
+  user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Roommate_Group {
+  group_id        String             @id @default(uuid())
+  group_name      String
+  created_at      DateTime           @default(now())
+
+  Users           User[]
+  Shared_Expenses Shared_Expense[]
+}
+
+model Shared_Expense {
+  expense_id      String          @id @default(uuid())
+  group_id        String
+  paid_by_user_id String
+  amount          Float
+  description     String
+  date            DateTime        @default(now())
+  
+  group           Roommate_Group  @relation(fields: [group_id], references: [group_id], onDelete: Cascade)
+  payer           User            @relation("PaidExpenses", fields: [paid_by_user_id], references: [user_id], onDelete: Cascade)
+  Splits          Expense_Split[]
+}
+
+model Expense_Split {
+  split_id        String          @id @default(uuid())
+  expense_id      String
+  owed_by_user_id String
+  amount_owed     Float
+  is_settled      Boolean         @default(false)
+  
+  expense         Shared_Expense  @relation(fields: [expense_id], references: [expense_id], onDelete: Cascade)
+  ower            User            @relation("OwedSplits", fields: [owed_by_user_id], references: [user_id], onDelete: Cascade)
+}

@@ -1,0 +1,74 @@
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="subtitle">Welcome back to your financial hub.</p>
+  </div>
+  <button class="btn-primary" (click)="connectBank()">Connect Bank</button>
+</div>
+
+<div class="dashboard-grid">
+  <!-- Net Worth -->
+  <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
+    <h3>Net Worth</h3>
+    <div class="metric-value">{{ netWorth | currency }}</div>
+    <div style="flex-grow: 1; min-height: 100px; width: 100%; position: relative;">
+      <canvas baseChart
+        [data]="lineChartData"
+        [options]="lineChartOptions"
+        [type]="'line'">
+      </canvas>
+    </div>
+  </div>
+  
+  <!-- Cash Flow -->
+  <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
+    <h3>Monthly Expenses</h3>
+    <div style="flex-grow: 1; min-height: 150px; width: 100%; position: relative;">
+      <canvas baseChart
+        [data]="doughnutChartData"
+        [options]="doughnutChartOptions"
+        [type]="'doughnut'">
+      </canvas>
+    </div>
+  </div>
+  
+  <!-- Credit Score Gauge -->
+  <div class="glass-panel stat-card score-card">
+    <h3>Credit Score</h3>
+    <div class="score-circle">
+      <span class="score-value">720</span>
+      <span class="score-label">Good</span>
+    </div>
+    <div class="trend positive">▲ +5 pts</div>
+  </div>
+  
+  <!-- Round Ups Jar -->
+  <div class="glass-panel stat-card">
+    <h3>Spring Break Jar</h3>
+    <div class="metric-value" style="color: var(--primary-accent);">{{ roundUpBalance | currency }}</div>
+    <div class="trend text-muted">From transaction spare change</div>
+    <button class="btn-primary" (click)="simulateRoundUps()" [disabled]="isSimulatingRoundUps" style="margin-top: 1rem; width: 100%; padding: 0.5rem; font-size: 0.85rem;">
+      {{ isSimulatingRoundUps ? 'Simulating...' : 'Simulate Round-Ups' }}
+    </button>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="glass-panel wide-card">
+    <h3>Recent Transactions</h3>
+    <div class="transaction-list">
+      <div class="transaction-item" *ngFor="let t of transactions">
+        <div class="t-info">
+          <span class="t-name">{{ t.merchant_name }}</span>
+          <span class="t-date">{{ t.date | date:'mediumDate' }}</span>
+        </div>
+        <div class="t-amount" [ngClass]="{'negative': t.amount < 0, 'positive': t.amount > 0}">
+          {{ t.amount | currency }}
+        </div>
+      </div>
+      <div *ngIf="transactions.length === 0" style="padding: 1rem; text-align: center; color: var(--text-secondary)">
+        No recent transactions found.
+      </div>
+    </div>
+  </div>
+</div>

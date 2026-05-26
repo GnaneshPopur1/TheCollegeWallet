@@ -1,0 +1,100 @@
+<div class="dashboard-header">
+  <h1>Roommate Ledger</h1>
+  <p class="subtitle" *ngIf="groupData?.group">Managing expenses for {{ groupData?.group?.group_name }}</p>
+  <p class="subtitle" *ngIf="!groupData?.group">You aren't in a roommate group yet.</p>
+</div>
+
+<div class="dashboard-grid" *ngIf="groupData?.group">
+  
+  <!-- Ledger Summary -->
+  <div class="glass-panel stat-card" [ngClass]="{'warning-card': groupData!.ledger.netBalance < 0}">
+    <h3>Net Balance</h3>
+    <div class="metric-value" style="font-size: 1.5rem;">
+      <span *ngIf="groupData!.ledger.netBalance > 0" style="color: #4CAF50;">You are owed {{ groupData!.ledger.netBalance | currency }}</span>
+      <span *ngIf="groupData!.ledger.netBalance < 0" style="color: #F44336;">You owe {{ (groupData!.ledger.netBalance * -1) | currency }}</span>
+      <span *ngIf="groupData!.ledger.netBalance === 0" class="text-muted">All settled up!</span>
+    </div>
+    <div class="trend text-muted" style="margin-top: 1rem;">
+      Total You Owe: {{ groupData!.ledger.totalIOwe | currency }} <br>
+      Total Owed To You: {{ groupData!.ledger.totalOwedToMe | currency }}
+    </div>
+  </div>
+
+  <!-- Add New Expense -->
+  <div class="glass-panel stat-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center;">
+    <h3>Split a New Bill</h3>
+    <form (ngSubmit)="submitNewExpense()" #expenseForm="ngForm" style="display: flex; gap: 1rem; margin-top: 1rem; align-items: flex-end;">
+      <div class="form-group" style="flex: 1; margin-bottom: 0;">
+        <label>Scan Receipt (AI)</label>
+        <input type="file" (change)="onReceiptSelected($event)" accept="image/*" class="form-control" [disabled]="isScanning" style="padding: 0.5rem; font-size: 0.8rem;" />
+        <span *ngIf="isScanning" style="font-size: 0.8rem; color: var(--primary-accent);">Scanning image...</span>
+      </div>
+      <div class="form-group" style="flex: 2; margin-bottom: 0;">
+        <label>Description</label>
+        <input type="text" class="form-control" name="desc" [(ngModel)]="newExpenseDesc" required placeholder="e.g. June Internet" />
+      </div>
+      <div class="form-group" style="flex: 1; margin-bottom: 0;">
+        <label>Total Amount ($)</label>
+        <input type="number" class="form-control" name="amount" [(ngModel)]="newExpenseAmount" required placeholder="80.00" min="0.01" step="0.01" />
+      </div>
+      <button type="submit" class="btn-primary" style="padding: 0.75rem 2rem;" [disabled]="!expenseForm.form.valid || isSubmittingExpense">
+        Split It
+      </button>
+    </form>
+  </div>
+
+  <!-- What I Owe -->
+  <div class="glass-panel wide-card">
+    <h3>Outstanding Bills I Owe</h3>
+    <div class="subscription-list" *ngIf="groupData!.splitsOwedByMe.length > 0">
+      <div class="sub-item" *ngFor="let split of groupData!.splitsOwedByMe">
+        <div class="sub-logo" style="background: #F44336;">!</div>
+        <div class="sub-details">
+          <span class="sub-name">{{ split.expense?.description }}</span>
+          <span class="sub-billing">{{ split.expense?.date | date }}</span>
+        </div>
+        <div class="sub-actions" style="display: flex; align-items: center; gap: 1rem;">
+          <span style="font-weight: 600; color: #F44336;">-{{ split.amount_owed | currency }}</span>
+          <button class="btn-primary" (click)="settleUp(split.split_id)" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">Mark Paid</button>
+        </div>
+      </div>
+    </div>
+    <p *ngIf="groupData!.splitsOwedByMe.length === 0" class="text-muted" style="padding: 1rem 0;">You're all caught up!</p>
+  </div>
+
+  <!-- What Is Owed To Me -->
+  <div class="glass-panel wide-card">
+    <h3>Who Owes Me</h3>
+    <div class="subscription-list" *ngIf="groupData!.splitsOwedToMe.length > 0">
+      <div class="sub-item" *ngFor="let split of groupData!.splitsOwedToMe">
+        <div class="sub-logo" style="background: #4CAF50;">$</div>
+        <div class="sub-details">
+          <span class="sub-name">{{ split.ower?.email }}</span>
+          <span class="sub-billing">Owes you for an expense</span>
+        </div>
+        <div class="sub-actions">
+          <span style="font-weight: 600; color: #4CAF50;">+{{ split.amount_owed | currency }}</span>
+        </div>
+      </div>
+    </div>
+    <p *ngIf="groupData!.splitsOwedToMe.length === 0" class="text-muted" style="padding: 1rem 0;">No one owes you anything.</p>
+  </div>
+
+  <!-- Recent Expenses Log -->
+  <div class="glass-panel wide-card" style="grid-column: 1 / -1;">
+    <h3>Recent Group Expenses</h3>
+    <div class="subscription-list">
+      <div class="sub-item" *ngFor="let exp of recentExpenses">
+        <div class="sub-logo" style="background: var(--surface-light);">📄</div>
+        <div class="sub-details">
+          <span class="sub-name">{{ exp.description }}</span>
+          <span class="sub-billing">Paid by {{ exp.payer?.email }} on {{ exp.date | date }}</span>
+        </div>
+        <div class="sub-actions">
+          <span style="font-weight: bold;">{{ exp.amount | currency }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

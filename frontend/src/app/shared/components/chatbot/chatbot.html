@@ -1,0 +1,24 @@
+<div class="chatbot-container">
+  <!-- The Chat Window -->
+  <div class="chat-window glass-panel" *ngIf="isOpen">
+    <div class="chat-header">
+      <h4>AI Advisor</h4>
+      <button (click)="toggleChat()">×</button>
+    </div>
+    <div class="chat-messages">
+      <div *ngFor="let msg of messages" class="message" [ngClass]="msg.sender">
+        {{ msg.text }}
+      </div>
+      <div *ngIf="isTyping" class="message ai typing">Typing...</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Ask about your budget..." />
+      <button (click)="sendMessage()" class="btn-primary" [disabled]="isTyping || !newMessage.trim()">Send</button>
+    </div>
+  </div>
+
+  <!-- The Floating Toggle Button -->
+  <button class="chat-toggle btn-primary" (click)="toggleChat()" *ngIf="!isOpen">
+    💬 Ask AI
+  </button>
+</div>

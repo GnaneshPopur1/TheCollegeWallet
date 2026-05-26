@@ -1,0 +1,33 @@
+<div class="dashboard-header">
+  <h1>Subscription Manager</h1>
+  <p class="subtitle">Keep track of your recurring expenses automatically fetched from your connected bank accounts.</p>
+</div>
+
+<div class="dashboard-grid">
+  <div class="glass-panel stat-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), transparent);">
+    <h3>Total Monthly Cost</h3>
+    <div class="metric-value" style="font-size: 2.5rem; color: #9C27B0;">{{ monthlyTotal | currency }}</div>
+  </div>
+
+  <div class="glass-panel wide-card" style="grid-column: 1 / -1;">
+    <h3>Active Subscriptions</h3>
+    
+    <div class="subscription-list" *ngIf="subscriptions.length > 0">
+      <div class="sub-item" *ngFor="let sub of subscriptions">
+        <div class="sub-logo" [style.background]="getRandomColor(sub.merchant_name)">{{ getInitial(sub.merchant_name) }}</div>
+        <div class="sub-details">
+          <span class="sub-name">{{ sub.merchant_name }}</span>
+          <span class="sub-billing">Last billed on {{ sub.date | date }}</span>
+        </div>
+        <div class="sub-actions">
+          <span style="font-weight: bold;">{{ (sub.amount < 0 ? sub.amount * -1 : sub.amount) | currency }}/mo</span>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="subscriptions.length === 0" class="text-muted" style="padding: 2rem; text-align: center;">
+      <p>No recurring subscriptions detected yet.</p>
+      <p style="font-size: 0.9rem;">Make sure you've connected your bank account on the Dashboard!</p>
+    </div>
+  </div>
+</div>

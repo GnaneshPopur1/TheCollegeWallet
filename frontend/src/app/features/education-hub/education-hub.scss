@@ -1,0 +1,162 @@
+.dashboard-header {
+  margin-bottom: 2rem;
+  
+  .subtitle {
+    color: var(--text-secondary);
+  }
+}
+
+.semester-card {
+  .semester-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    
+    h3 {
+      margin: 0;
+      color: var(--text-primary);
+    }
+    
+    .days-left {
+      background: var(--primary-accent-glow);
+      color: var(--primary-accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+  }
+
+  .progress-section {
+    margin-bottom: 2rem;
+    
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .dining-tracker {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--surface-glass-border);
+    
+    h4 {
+      color: var(--text-secondary);
+      margin: 0 0 4px 0;
+    }
+    
+    .safe-spend {
+      margin: 4px 0 0 0;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      
+      strong {
+        color: var(--success);
+      }
+    }
+  }
+}
+
+.aid-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+  
+  li {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--surface-glass-border);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &.pending {
+      opacity: 0.6;
+    }
+    
+    .aid-name {
+      font-weight: 500;
+    }
+    
+    .positive {
+      color: var(--success);
+      font-weight: 600;
+    }
+    
+    .pending-amount {
+      color: var(--warning);
+      font-style: italic;
+    }
+  }
+}
+
+.loan-summary {
+  margin-top: 1rem;
+  
+  .loan-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    
+    .loan-type {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .loan-amount {
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+    
+    &.unsubsidized {
+      border-left: 3px solid var(--warning);
+      
+      .interest-accrued {
+        color: var(--danger);
+        font-size: 0.875rem;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+.total-debt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-glass-border);
+  font-weight: 600;
+  
+  .debt-amount {
+    font-size: 1.25rem;
+    color: var(--danger);
+  }
+}
