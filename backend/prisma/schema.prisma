@@ -31,6 +31,8 @@ model User {
   Shared_Expenses    Shared_Expense[] @relation("PaidExpenses")
   Expense_Splits     Expense_Split[]  @relation("OwedSplits")
   Push_Subscriptions Push_Subscription[]
+  Subscriptions      Subscription[]
+  Budgets            Budget[]
 }
 
 model Push_Subscription {
@@ -131,4 +133,25 @@ model Expense_Split {
   
   expense         Shared_Expense  @relation(fields: [expense_id], references: [expense_id], onDelete: Cascade)
   ower            User            @relation("OwedSplits", fields: [owed_by_user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Subscription {
+  subscription_id  String   @id @default(uuid())
+  user_id          String
+  merchant_name    String
+  amount           Float
+  status           String   @default("ACTIVE") // ACTIVE, CANCELLED
+  date_found       DateTime @default(now())
+  
+  user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Budget {
+  budget_id        String   @id @default(uuid())
+  user_id          String
+  period           String   // WEEKLY, MONTHLY, QUARTERLY, SEMI_ANNUAL
+  amount_limit     Float
+  start_date       DateTime @default(now())
+  
+  user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }

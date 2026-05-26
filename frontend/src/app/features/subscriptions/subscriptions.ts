@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AccountService, Transaction } from '../../core/services/account.service';
+import { SubscriptionService, AppSubscription } from '../../core/services/subscription.service';
 
 @Component({
   selector: 'app-subscriptions',
@@ -10,16 +10,46 @@ import { AccountService, Transaction } from '../../core/services/account.service
   styleUrl: './subscriptions.scss'
 })
 export class Subscriptions implements OnInit {
-  subscriptions: Transaction[] = [];
+  subscriptions: AppSubscription[] = [];
   monthlyTotal: number = 0;
+  isScanning: boolean = false;
 
-  constructor(private accountService: AccountService) {}
+  constructor(private subService: SubscriptionService) {}
 
   ngOnInit() {
-    this.accountService.getSubscriptions().subscribe(data => {
+    this.fetchSubscriptions();
+  }
+
+  fetchSubscriptions() {
+    this.subService.getSubscriptions().subscribe(data => {
       this.subscriptions = data || [];
-      // Calculate total assuming all are monthly for MVP
-      this.monthlyTotal = this.subscriptions.reduce((acc, curr) => acc + (curr.amount < 0 ? curr.amount * -1 : curr.amount), 0);
+      this.calculateTotal();
+    });
+  }
+
+  calculateTotal() {
+    this.monthlyTotal = this.subscriptions
+      .filter(s => s.status === 'ACTIVE')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  }
+
+  scanFootprint() {
+    this.isScanning = true;
+    this.subService.scanFootprint().subscribe(res => {
+      this.isScanning = false;
+      if (res && res.subscriptions) {
+        this.fetchSubscriptions();
+      }
+    });
+  }
+
+  cancelSub(id: string) {
+    this.subService.cancelSubscription(id).subscribe(() => {
+      const sub = this.subscriptions.find(s => s.subscription_id === id);
+      if (sub) {
+        sub.status = 'CANCELLED';
+        this.calculateTotal();
+      }
     });
   }
 

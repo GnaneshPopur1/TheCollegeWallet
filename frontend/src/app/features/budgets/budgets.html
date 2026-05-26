@@ -1,0 +1,75 @@
+<div class="dashboard-header">
+  <h1>Budgets</h1>
+  <p class="subtitle">Set flexible spending limits for different timeframes and track your progress.</p>
+</div>
+
+<div class="dashboard-grid">
+  
+  <!-- Add New Budget -->
+  <div class="glass-panel stat-card" style="grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center;">
+    <h3>Create or Update Budget</h3>
+    <form (ngSubmit)="createBudget()" #budgetForm="ngForm" style="display: flex; gap: 1rem; margin-top: 1rem; align-items: flex-end; flex-wrap: wrap;">
+      
+      <div class="form-group" style="flex: 1; margin-bottom: 0; min-width: 200px;">
+        <label>Timeframe</label>
+        <select class="form-control" name="period" [(ngModel)]="newPeriod" required style="padding: 0.75rem;">
+          <option value="WEEKLY">Weekly</option>
+          <option value="MONTHLY">Monthly</option>
+          <option value="QUARTERLY">Quarterly (3 Months)</option>
+          <option value="SEMI_ANNUAL">Semi-Annual (6 Months)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="flex: 2; margin-bottom: 0; min-width: 200px;">
+        <label>Target Spending Limit ($)</label>
+        <input type="number" class="form-control" name="limit" [(ngModel)]="newLimit" required placeholder="500.00" min="1" step="1" />
+      </div>
+
+      <button type="submit" class="btn-primary" style="padding: 0.75rem 2rem; min-width: 150px;" [disabled]="!budgetForm.form.valid || isSubmitting">
+        Set Limit
+      </button>
+    </form>
+  </div>
+
+  <!-- Active Budgets List -->
+  <div class="glass-panel wide-card" style="grid-column: 1 / -1;">
+    <h3>My Active Limits</h3>
+    
+    <div class="subscription-list" *ngIf="budgets.length > 0">
+      <div class="sub-item" *ngFor="let budget of budgets" style="flex-direction: column; align-items: stretch;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <div>
+            <span class="sub-name" style="font-size: 1.1rem;">{{ budget.period | titlecase }} Budget</span>
+            <span class="sub-billing">Started {{ budget.period_start | date:'mediumDate' }}</span>
+          </div>
+          <div style="text-align: right;">
+            <span style="font-weight: bold; font-size: 1.2rem;">{{ budget.current_spent | currency }}</span>
+            <span class="text-muted"> / {{ budget.amount_limit | currency }}</span>
+          </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar-bg" style="width: 100%; height: 10px; background: var(--surface-light); border-radius: 5px; overflow: hidden; margin-top: 0.5rem;">
+          <div class="progress-bar-fill" 
+               [style.width]="getProgressWidth(budget.current_spent, budget.amount_limit)"
+               [style.background]="getProgressColor(budget.current_spent, budget.amount_limit)"
+               style="height: 100%; border-radius: 5px; transition: width 0.5s ease-in-out;">
+          </div>
+        </div>
+        
+        <!-- Status Text -->
+        <div style="text-align: right; margin-top: 0.25rem; font-size: 0.8rem;"
+             [style.color]="budget.current_spent > budget.amount_limit ? '#F44336' : 'var(--text-secondary)'">
+          <span *ngIf="budget.current_spent <= budget.amount_limit">{{ (budget.amount_limit - budget.current_spent) | currency }} remaining</span>
+          <span *ngIf="budget.current_spent > budget.amount_limit">Over budget by {{ (budget.current_spent - budget.amount_limit) | currency }}</span>
+        </div>
+
+      </div>
+    </div>
+    
+    <div *ngIf="budgets.length === 0" class="text-muted" style="padding: 2rem; text-align: center;">
+      <p>You haven't set any budgets yet.</p>
+    </div>
+  </div>
+
+</div>
