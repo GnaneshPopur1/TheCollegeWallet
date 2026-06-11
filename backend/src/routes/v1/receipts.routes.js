@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const tesseract = require('tesseract.js');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { authenticateToken } = require('../../middleware/auth.middleware');
 
 const upload = multer({
@@ -21,28 +21,39 @@ router.post('/scan', authenticateToken, upload.single('receipt'), async (req, re
   }
 
   try {
-    // Run OCR
-    const {
-      data: { text },
-    } = await tesseract.recognize(req.file.buffer, 'eng');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    // Simple regex to find a Total amount (e.g. Total: $12.34 or TOTAL 12.34)
-    const totalRegex = /total[\s:]*[$]*([0-9]+\.[0-9]{2})/i;
-    const match = text.match(totalRegex);
-    let extractedTotal = null;
+    const prompt = `Extract the details from this receipt and output them STRICTLY as a JSON object with the following schema, and absolutely no markdown wrapping, code blocks, or extra text:
+{
+  "storeName": "Store Name",
+  "date": "YYYY-MM-DD",
+  "items": [{"name": "Item 1", "price": 10.00}, {"name": "Item 2", "price": 5.50}],
+  "tax": 1.50,
+  "total": 17.00
+}`;
 
-    if (match && match[1]) {
-      extractedTotal = parseFloat(match[1]);
-    }
+    const imagePart = {
+      inlineData: {
+        data: req.file.buffer.toString("base64"),
+        mimeType: req.file.mimetype
+      },
+    };
+
+    const result = await model.generateContent([prompt, imagePart]);
+    const responseText = result.response.text();
+    
+    // Clean up markdown in case it slips in
+    const jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(jsonStr);
 
     res.json({
       success: true,
-      text: text,
-      extractedTotal: extractedTotal,
+      data: parsedData
     });
   } catch (error) {
-    console.error('OCR Error:', error);
-    res.status(500).json({ error: 'Failed to process receipt image' });
+    console.error('Gemini API Error:', error);
+    res.status(500).json({ error: 'Failed to process receipt with AI' });
   }
 });
 

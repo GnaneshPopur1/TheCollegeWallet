@@ -106,6 +106,72 @@
       }
     }
 
+    .receipt-meta {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 1rem;
+
+      .meta-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 0.25rem;
+      }
+    }
+
+    .items-list {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-top: 1rem;
+
+      label {
+        display: block;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+      }
+
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .item-name {
+          color: var(--text-primary);
+        }
+
+        .item-price {
+          color: var(--text-primary);
+          font-family: monospace;
+        }
+
+        &.total-row {
+          margin-top: 1rem;
+          border-bottom: none;
+          color: var(--text-secondary);
+        }
+
+        &.grand-total {
+          margin-top: 0.5rem;
+          padding-top: 1rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          font-weight: 700;
+          font-size: 1.25rem;
+          color: var(--primary);
+        }
+      }
+    }
+
     .actions {
       margin-top: 2rem;
       text-align: center;

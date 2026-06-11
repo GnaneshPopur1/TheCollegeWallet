@@ -4,10 +4,17 @@ import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
+export interface ReceiptItem {
+  name: string;
+  price: number;
+}
+
 export interface ScanResult {
-  success: boolean;
-  text: string;
-  extractedTotal: number | null;
+  storeName: string;
+  date: string;
+  items: ReceiptItem[];
+  tax: number;
+  total: number;
 }
 
 @Injectable({
@@ -36,8 +43,11 @@ export class ReceiptService {
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.post<ScanResult>(`${this.apiUrl}/scan`, formData, { headers })
-      .pipe(catchError(this.handleError<ScanResult>('scanReceipt')));
+    return this.http.post<{data: ScanResult}>(`${this.apiUrl}/scan`, formData, { headers })
+      .pipe(
+        map(response => response.data),
+        catchError(this.handleError<ScanResult>('scanReceipt'))
+      );
   }
 
   private handleError<T>(operation = 'operation', result?: T) {

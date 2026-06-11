@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h1>Receipt Scanner</h1>
-      <p class="subtitle">Upload a receipt image to automatically extract totals using OCR.</p>
+      <p class="subtitle">Upload a receipt to automatically extract items, tax, and total using Google Gemini AI.</p>
     </div>
   </div>
 
@@ -20,7 +20,7 @@
   <div class="scanning-state" *ngIf="isScanning">
     <div class="spinner"></div>
     <h3>Analyzing Receipt...</h3>
-    <p>Extracting text and identifying total amount (this may take a moment)</p>
+    <p>Extracting items, prices, and total amount (powered by Gemini 1.5 Flash)</p>
   </div>
 
   <div class="result-card" *ngIf="scanResult && !isScanning">
@@ -30,23 +30,38 @@
     </div>
 
     <div class="extracted-data">
-      <div class="data-group">
-        <label>Extracted Total</label>
-        <div class="total-value" *ngIf="scanResult.extractedTotal !== null">
-          {{ scanResult.extractedTotal | currency }}
+      <div class="receipt-meta">
+        <div class="data-group">
+          <label>Store</label>
+          <div class="meta-value">{{ scanResult.storeName || 'Unknown Store' }}</div>
         </div>
-        <div class="total-value not-found" *ngIf="scanResult.extractedTotal === null">
-          Could not find total amount
+        <div class="data-group">
+          <label>Date</label>
+          <div class="meta-value">{{ scanResult.date || 'Unknown Date' }}</div>
         </div>
       </div>
 
-      <div class="data-group">
-        <label>Raw Extracted Text</label>
-        <div class="raw-text">{{ scanResult.text || 'No text recognized.' }}</div>
+      <div class="items-list">
+        <label>Itemized List</label>
+        <div class="item-row" *ngFor="let item of scanResult.items">
+          <span class="item-name">{{ item.name }}</span>
+          <span class="item-price">{{ item.price | currency }}</span>
+        </div>
+        <div class="item-row total-row">
+          <span class="item-name">Tax</span>
+          <span class="item-price">{{ scanResult.tax | currency }}</span>
+        </div>
+        <div class="item-row grand-total">
+          <span class="item-name">Grand Total</span>
+          <span class="item-price">{{ scanResult.total | currency }}</span>
+        </div>
       </div>
     </div>
 
     <div class="actions">
+      <button class="btn btn-primary" (click)="splitWithRoommates()" [disabled]="isSplitting">
+        {{ isSplitting ? 'Splitting...' : 'Split Evenly with Roommates' }}
+      </button>
       <button class="btn btn-outline" (click)="resetScan()">Scan Another</button>
     </div>
   </div>
