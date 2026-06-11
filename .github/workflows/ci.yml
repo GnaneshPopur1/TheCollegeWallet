@@ -22,6 +22,9 @@ jobs:
       run: npm run install:all
 
     - name: Run Backend Tests & Prisma Validation
+      env:
+        DATABASE_URL: "postgresql://postgres:password@localhost:5432/postgres"
+        DIRECT_URL: "postgresql://postgres:password@localhost:5432/postgres"
       run: |
         cd backend
         npx prisma validate
