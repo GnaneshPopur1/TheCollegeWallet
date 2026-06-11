@@ -19,6 +19,17 @@
     }
   }
 
+  .group-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .dashboard-grid {
     display: flex;
     flex-direction: column;
@@ -203,4 +214,80 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-state, .empty-state { text-align: center; padding: 4rem; }
   .icon-large { font-size: 3rem; margin-bottom: 1rem; }
+
+  /* Chat Sidebar Styles */
+  .chat-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+    
+    h3 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-right: 0.5rem;
+
+      .message {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+
+        .sender {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          margin-bottom: 0.25rem;
+        }
+
+        .bubble {
+          background: var(--bg-color);
+          padding: 0.75rem 1rem;
+          border-radius: 12px;
+          border-top-left-radius: 2px;
+          font-size: 0.95rem;
+          color: var(--text-color);
+          max-width: 90%;
+        }
+
+        .time {
+          font-size: 0.7rem;
+          color: var(--text-secondary);
+          margin-top: 0.25rem;
+        }
+
+        &.my-message {
+          align-items: flex-end;
+          .bubble {
+            background: rgba(var(--primary-color-rgb), 0.2);
+            border: 1px solid var(--primary-color);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 2px;
+          }
+        }
+      }
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+      
+      input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-color);
+        color: var(--text-color);
+      }
+    }
+  }
 }

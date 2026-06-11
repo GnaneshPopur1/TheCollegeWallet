@@ -35,6 +35,7 @@ model User {
   Push_Subscriptions Push_Subscription[]
   Subscriptions      Subscription[]
   Budgets            Budget[]
+  ChatMessages       ChatMessage[]
 }
 
 model Push_Subscription {
@@ -113,6 +114,7 @@ model Roommate_Group {
 
   Users           User[]
   Shared_Expenses Shared_Expense[]
+  ChatMessages    ChatMessage[]
 }
 
 model Shared_Expense {
@@ -158,4 +160,15 @@ model Budget {
   start_date       DateTime @default(now())
   
   user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  message_id String   @id @default(uuid())
+  group_id   String
+  user_id    String
+  text       String
+  created_at DateTime @default(now())
+
+  group      Roommate_Group @relation(fields: [group_id], references: [group_id], onDelete: Cascade)
+  user       User           @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }

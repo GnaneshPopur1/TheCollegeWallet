@@ -3,6 +3,16 @@ const router = express.Router();
 const prisma = require('../../db');
 const { authenticateToken } = require('../../middleware/auth.middleware');
 const { isNonEmptyString, parsePositiveNumber } = require('../../utils/validation');
+const webpush = require('web-push');
+const config = require('../../config');
+
+if (config.vapidPublicKey && config.vapidPrivateKey) {
+  webpush.setVapidDetails(
+    'mailto:support@thecollegewallet.com',
+    config.vapidPublicKey,
+    config.vapidPrivateKey
+  );
+}
 
 // Create a new group
 router.post('/group', authenticateToken, async (req, res) => {
@@ -117,6 +127,31 @@ router.post('/expenses', authenticateToken, async (req, res) => {
       await prisma.expense_Split.createMany({
         data: splitsToCreate,
       });
+
+      // Send Push Notifications
+      if (config.vapidPublicKey && config.vapidPrivateKey) {
+        const owerIds = splitsToCreate.map(s => s.owed_by_user_id);
+        const subs = await prisma.push_Subscription.findMany({
+          where: { user_id: { in: owerIds } }
+        });
+
+        const payload = JSON.stringify({
+          title: 'New Expense Added 💸',
+          body: `You owe $${splitAmount.toFixed(2)} for ${description.trim()}`,
+          url: '/roommates'
+        });
+
+        for (const sub of subs) {
+          try {
+            await webpush.sendNotification({
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth }
+            }, payload);
+          } catch (err) {
+            console.error('Push Notification Error:', err);
+          }
+        }
+      }
     }
 
     res.status(201).json(expense);
@@ -227,6 +262,31 @@ router.post('/split-transaction', authenticateToken, async (req, res) => {
 
     if (splitsToCreate.length > 0) {
       await prisma.expense_Split.createMany({ data: splitsToCreate });
+
+      // Send Push Notifications
+      if (config.vapidPublicKey && config.vapidPrivateKey) {
+        const owerIds = splitsToCreate.map(s => s.owed_by_user_id);
+        const subs = await prisma.push_Subscription.findMany({
+          where: { user_id: { in: owerIds } }
+        });
+
+        const payload = JSON.stringify({
+          title: 'Transaction Split 🏦',
+          body: `You owe $${splitAmount.toFixed(2)} for ${transaction.merchant_name}`,
+          url: '/roommates'
+        });
+
+        for (const sub of subs) {
+          try {
+            await webpush.sendNotification({
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth }
+            }, payload);
+          } catch (err) {
+            console.error('Push Notification Error:', err);
+          }
+        }
+      }
     }
 
     res.status(201).json({

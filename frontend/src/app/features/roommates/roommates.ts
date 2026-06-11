@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RoommateService, GroupData, SharedExpense } from '../../core/services/roommate.service';
+import { ChatService, ChatMessage } from '../../core/services/chat.service';
 
 @Component({
   selector: 'app-roommates',
@@ -21,10 +22,24 @@ export class Roommates implements OnInit {
   newExpenseDescription = '';
   isAddingExpense = false;
 
-  constructor(private roommateService: RoommateService) {}
+  // Chat
+  messages: ChatMessage[] = [];
+  newMessageText = '';
+  chatInterval: any;
+
+  constructor(
+    private roommateService: RoommateService,
+    private chatService: ChatService
+  ) {}
 
   ngOnInit() {
     this.loadData();
+  }
+
+  ngOnDestroy() {
+    if (this.chatInterval) {
+      clearInterval(this.chatInterval);
+    }
   }
 
   loadData() {
@@ -35,7 +50,31 @@ export class Roommates implements OnInit {
       this.roommateService.getRecentExpenses().subscribe(expenses => {
         this.expenses = expenses;
         this.isLoading = false;
+
+        // Start chat polling if in a group
+        if (this.groupData?.group && !this.chatInterval) {
+          this.loadMessages();
+          this.chatInterval = setInterval(() => {
+            this.loadMessages();
+          }, 3000);
+        }
       });
+    });
+  }
+
+  loadMessages() {
+    if (!this.groupData?.group) return;
+    this.chatService.getMessages(this.groupData.group.group_id).subscribe(msgs => {
+      this.messages = msgs;
+    });
+  }
+
+  sendMessage() {
+    if (!this.newMessageText.trim() || !this.groupData?.group) return;
+    const text = this.newMessageText;
+    this.newMessageText = ''; // clear immediately for UX
+    this.chatService.sendMessage(this.groupData.group.group_id, text).subscribe(msg => {
+      if (msg) this.messages.push(msg);
     });
   }
 

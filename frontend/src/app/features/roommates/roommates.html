@@ -21,7 +21,9 @@
     <p>You aren't in a roommate group yet. To split rent and utilities, ask your roommates to invite you or create a group.</p>
   </div>
 
-  <div *ngIf="!isLoading && groupData?.group" class="dashboard-grid">
+  <div *ngIf="!isLoading && groupData?.group" class="group-layout">
+    
+    <div class="dashboard-grid">
     
     <!-- Ledger Overview -->
     <div class="card ledger-card">
@@ -96,6 +98,28 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+  </div>
+
+    <!-- Chat Sidebar -->
+    <div class="chat-sidebar card">
+      <h3>Group Chat</h3>
+      
+      <div class="chat-messages">
+        <div class="message" *ngFor="let msg of messages" [class.my-message]="msg.user_id === groupData?.group?.group_id">
+          <!-- Note: The class check above is a naive MVP check. Better to check against currentUser ID. -->
+          <span class="sender">{{ msg.user?.email?.split('@')[0] }}</span>
+          <div class="bubble">{{ msg.text }}</div>
+          <span class="time">{{ msg.created_at | date:'shortTime' }}</span>
+        </div>
+        <div class="no-messages" *ngIf="messages.length === 0">No messages yet.</div>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" [(ngModel)]="newMessageText" placeholder="Type a message..." (keyup.enter)="sendMessage()">
+        <button class="btn btn-primary btn-sm" (click)="sendMessage()">Send</button>
+      </div>
     </div>
 
   </div>

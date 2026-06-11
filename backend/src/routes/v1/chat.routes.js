@@ -1,54 +1,69 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../../db');
-const config = require('../../config');
 const { authenticateToken } = require('../../middleware/auth.middleware');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-router.post('/', authenticateToken, async (req, res) => {
+// Get chat messages for a group
+router.get('/:group_id', authenticateToken, async (req, res) => {
   try {
-    const { message } = req.body;
-
-    // 1. Fetch user's financial context
-    const accounts = await prisma.account.findMany({
-      where: { user_id: req.user.user_id },
-      select: { account_type: true, current_balance: true },
-    });
-
-    const transactions = await prisma.transaction.findMany({
-      where: { account: { user_id: req.user.user_id } },
-      take: 10,
-      orderBy: { date: 'desc' },
-      select: { amount: true, merchant_name: true, date: true },
-    });
-
-    const contextPrompt = `
-      You are a helpful, enthusiastic AI financial advisor for college students.
-      The user is asking: "${message}"
-      
-      Here is their real-time financial context:
-      Accounts: ${JSON.stringify(accounts)}
-      Recent Transactions: ${JSON.stringify(transactions)}
-      
-      Give a concise, helpful response (max 2 paragraphs). Be encouraging!
-    `;
-
-    // 2. Call Gemini API if key exists, otherwise simulate
-    if (config.geminiApiKey) {
-      const genAI = new GoogleGenerativeAI(config.geminiApiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-      const result = await model.generateContent(contextPrompt);
-      const responseText = result.response.text();
-      return res.json({ reply: responseText });
-    } else {
-      // Simulated fallback
-      const totalBalance = accounts.reduce((sum, a) => sum + a.current_balance, 0);
-      const fallbackMsg = `[Simulated AI]: I see you have $${totalBalance.toFixed(2)} across your accounts, and your last transaction was at ${transactions[0]?.merchant_name || 'nowhere'}. To get real AI advice, add your GEMINI_API_KEY to the backend .env file!`;
-      return res.json({ reply: fallbackMsg });
+    const { group_id } = req.params;
+    
+    // Verify user belongs to this group
+    const user = await prisma.user.findUnique({ where: { user_id: req.user.user_id } });
+    if (user.roommate_group_id !== group_id) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
     }
+
+    const messages = await prisma.chatMessage.findMany({
+      where: { group_id },
+      include: {
+        user: {
+          select: { email: true }
+        }
+      },
+      orderBy: { created_at: 'asc' },
+      take: 100 // Limit to last 100 messages for MVP
+    });
+
+    res.json(messages);
   } catch (error) {
-    console.error('Chat Error:', error);
-    res.status(500).json({ error: 'Failed to generate AI response' });
+    console.error('Fetch Messages Error:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Post a new chat message
+router.post('/:group_id', authenticateToken, async (req, res) => {
+  try {
+    const { group_id } = req.params;
+    const { text } = req.body;
+    
+    const user = await prisma.user.findUnique({ where: { user_id: req.user.user_id } });
+    if (user.roommate_group_id !== group_id) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
+    }
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ error: 'Message cannot be empty' });
+    }
+
+    const newMessage = await prisma.chatMessage.create({
+      data: {
+        group_id,
+        user_id: req.user.user_id,
+        text: text.trim()
+      },
+      include: {
+        user: {
+          select: { email: true }
+        }
+      }
+    });
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Post Message Error:', error);
+    res.status(500).json({ error: 'Failed to post message' });
   }
 });
 
