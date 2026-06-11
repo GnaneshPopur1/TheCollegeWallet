@@ -1,0 +1,114 @@
+.floating-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 220px;
+  background: transparent;
+  border: none;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  pointer-events: none; /* Let clicks pass through the invisible background */
+
+  > * {
+    pointer-events: auto; /* Re-enable clicks for actual content */
+  }
+
+  .logo {
+    margin-bottom: 4rem;
+    
+    h2 {
+      margin: 0;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: -1px;
+      font-size: 1.25rem;
+    }
+  }
+
+  .nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex-grow: 1;
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: #525252;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      font-size: 0.95rem;
+      
+      .nav-icon {
+        margin-right: 1rem;
+        font-size: 1.1rem;
+        opacity: 0.4;
+        filter: grayscale(100%);
+        transition: all 0.3s ease;
+      }
+
+      &:hover {
+        color: #a3a3a3;
+        transform: translateX(5px);
+        .nav-icon { opacity: 0.8; }
+      }
+      
+      &.active {
+        color: #ffffff;
+        .nav-icon {
+          filter: grayscale(0%);
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  .auth-buttons {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .nav-link {
+      text-decoration: none;
+      color: #525252;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s ease;
+      &:hover { color: #ffffff; }
+    }
+
+    .btn-signup {
+      text-decoration: none;
+      text-align: center;
+      background: #ffffff;
+      color: #000000;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s ease;
+      &:hover {
+        background: #e5e5e5;
+      }
+    }
+  }
+
+  @media (max-width: 992px) {
+    position: relative;
+    top: 0; left: 0; right: 0; bottom: auto;
+    width: 100%;
+    padding: 1.5rem 2rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    .logo { margin: 0; }
+    .nav-menu { flex-direction: row; flex-grow: 0; gap: 2rem; }
+    .auth-buttons { margin: 0; flex-direction: row; gap: 2rem; align-items: center; }
+  }
+}

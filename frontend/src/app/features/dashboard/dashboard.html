@@ -1,0 +1,128 @@
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="subtitle">Welcome back to your financial hub.</p>
+  </div>
+  <button class="btn-primary" (click)="connectBank()">Connect Bank</button>
+</div>
+
+<div *ngIf="!isEmailVerified" style="background-color: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 4px; margin-bottom: 2rem;">
+  <div style="color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem;">Verify your email</div>
+  <div style="font-size: 0.9rem; color: var(--text-secondary);">Check your console logs (mock email) to click the verification link and secure your account.</div>
+</div>
+
+<div class="dashboard-grid">
+  <!-- Net Worth -->
+  <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
+    <h3>Net Worth</h3>
+    <div class="metric-value">{{ netWorth | currency }}</div>
+    <div style="flex-grow: 1; min-height: 100px; width: 100%; position: relative;">
+      <canvas baseChart
+        [data]="lineChartData"
+        [options]="lineChartOptions"
+        [type]="'line'">
+      </canvas>
+    </div>
+  </div>
+  
+  <!-- Cash Flow -->
+  <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
+    <h3>Monthly Expenses</h3>
+    <div style="flex-grow: 1; min-height: 150px; width: 100%; position: relative;">
+      <canvas baseChart
+        [data]="doughnutChartData"
+        [options]="doughnutChartOptions"
+        [type]="'doughnut'">
+      </canvas>
+    </div>
+  </div>
+  
+  <!-- Credit Score Gauge -->
+  <div class="glass-panel stat-card score-card">
+    <h3>Credit Score</h3>
+    <div class="score-circle">
+      <span class="score-value">720</span>
+      <span class="score-label">Good</span>
+    </div>
+    <div class="trend positive">▲ +5 pts</div>
+  </div>
+  
+  <!-- Round Ups Jar -->
+  <div class="glass-panel stat-card">
+    <h3>Spring Break Jar</h3>
+    <div class="metric-value" style="color: var(--primary-accent);">{{ roundUpBalance | currency }}</div>
+    <div class="trend text-muted">From transaction spare change</div>
+    <button class="btn-primary" (click)="simulateRoundUps()" [disabled]="isSimulatingRoundUps" style="margin-top: 1rem; width: 100%; padding: 0.5rem; font-size: 0.85rem;">
+      {{ isSimulatingRoundUps ? 'Simulating...' : 'Simulate Round-Ups' }}
+    </button>
+  </div>
+  
+  <!-- Profile Settings -->
+  <div class="glass-panel stat-card" style="display: flex; flex-direction: column;">
+    <h3>Profile Settings</h3>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label>Venmo Handle</label>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span style="color: var(--text-secondary);">@</span>
+        <input type="text" class="form-control" [(ngModel)]="venmoHandle" placeholder="username" style="flex: 1;" />
+      </div>
+    </div>
+    <button class="btn-primary" (click)="updateVenmo()" [disabled]="isUpdatingVenmo" style="margin-top: auto; width: 100%; padding: 0.5rem; font-size: 0.85rem;">
+      {{ isUpdatingVenmo ? 'Saving...' : 'Save Changes' }}
+    </button>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="glass-panel wide-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+      <h3 style="margin: 0;">Recent Transactions</h3>
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <input type="text" class="form-control search-input" [(ngModel)]="searchQuery"
+               (ngModelChange)="filterTransactions()" placeholder="🔍 Search merchants..." />
+        <select class="form-control filter-select" [(ngModel)]="filterType" (ngModelChange)="filterTransactions()">
+          <option value="all">All</option>
+          <option value="expenses">Expenses Only</option>
+          <option value="income">Income Only</option>
+          <option value="recurring">Recurring</option>
+        </select>
+        <button class="btn-export" (click)="exportCSV()" title="Export to CSV">📥 Export</button>
+      </div>
+    </div>
+
+    <!-- Loading Skeleton -->
+    <div class="transaction-list" *ngIf="isLoadingTransactions">
+      <div class="skeleton-item" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton-line" style="width: 40%;"></div>
+        <div class="skeleton-line" style="width: 20%;"></div>
+      </div>
+    </div>
+
+    <div class="transaction-list" *ngIf="!isLoadingTransactions">
+      <div class="transaction-item" *ngFor="let t of filteredTransactions">
+        <div class="t-info">
+          <span class="t-name">{{ t.merchant_name }}</span>
+          <span class="t-date">{{ t.date | date:'mediumDate' }}
+            <span class="recurring-badge" *ngIf="t.is_recurring">🔄 Recurring</span>
+          </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div class="t-amount" [ngClass]="{'negative': t.amount < 0, 'positive': t.amount > 0}">
+            {{ t.amount | currency }}
+          </div>
+          <button class="btn-split"
+                  *ngIf="t.amount < 0"
+                  (click)="splitTransaction(t)"
+                  [disabled]="t.isSplitting"
+                  title="Split with roommates">
+            {{ t.isSplitting ? '...' : '✂️ Split' }}
+          </button>
+        </div>
+      </div>
+      <div *ngIf="filteredTransactions.length === 0" style="padding: 2rem; text-align: center; color: var(--text-secondary)">
+        <span *ngIf="searchQuery || filterType !== 'all'">No transactions match your filters.</span>
+        <span *ngIf="!searchQuery && filterType === 'all'">No recent transactions found. Connect a bank to get started!</span>
+      </div>
+    </div>
+  </div>
+</div>

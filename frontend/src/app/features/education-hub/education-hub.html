@@ -1,0 +1,115 @@
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h1>Education Hub</h1>
+    <p class="subtitle" *ngIf="currentTerm">Your academic financial breakdown for {{ currentTerm.semester_name }}</p>
+    <p class="subtitle" *ngIf="!currentTerm">No academic term data found.</p>
+  </div>
+  <button *ngIf="!isCreatingTerm" class="btn btn-primary" (click)="toggleCreateTerm()">+ New Term</button>
+  <button *ngIf="isCreatingTerm" class="btn btn-secondary" (click)="toggleCreateTerm()">Cancel</button>
+</div>
+
+<!-- Create Term Form -->
+<div class="glass-panel" *ngIf="isCreatingTerm" style="margin-bottom: 2rem;">
+  <h3>Create Academic Term</h3>
+  
+  <div class="form-group" style="margin-top: 1rem;">
+    <label style="color: #64ffda;">🚀 Campus Preset (Hyper-Local Pilot)</label>
+    <select class="form-control" (change)="onPresetChange($event)">
+      <option *ngFor="let preset of campusPresets" [value]="preset.id">{{ preset.name }}</option>
+    </select>
+  </div>
+
+  <form [formGroup]="termForm" (ngSubmit)="submitTerm()" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+    <div class="form-group">
+      <label>Semester Name</label>
+      <input type="text" formControlName="semester_name" class="form-control" placeholder="e.g. Fall 2026">
+    </div>
+    <div class="form-group">
+      <label>End Date</label>
+      <input type="date" formControlName="end_date" class="form-control">
+    </div>
+    <div class="form-group">
+      <label>Total Tuition ($)</label>
+      <input type="number" formControlName="tuition_total" class="form-control" placeholder="0.00">
+    </div>
+    <div class="form-group">
+      <label>Financial Aid Applied ($)</label>
+      <input type="number" formControlName="aid_applied" class="form-control" placeholder="0.00">
+    </div>
+    <div class="form-group">
+      <label>Starting Dining Dollars ($)</label>
+      <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+        <select class="form-control" (change)="onMealPlanChange($event)">
+          <option *ngFor="let plan of mealPlanTiers" [value]="plan.id">{{ plan.name }}</option>
+        </select>
+        <input type="number" *ngIf="selectedMealPlan === 'custom'" formControlName="dining_dollars_bal" class="form-control" placeholder="0.00" style="margin-top: 0.5rem;">
+      </div>
+    </div>
+    <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
+      <button type="submit" class="btn btn-primary" [disabled]="!termForm.valid">Save Term</button>
+    </div>
+  </form>
+</div>
+
+<div class="dashboard-grid" *ngIf="currentTerm">
+  <!-- Tuition & Aid -->
+  <div class="glass-panel stat-card">
+    <h3>Tuition & Aid</h3>
+    <div class="metric-value">{{ currentTerm.tuition_total | currency }}</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" [style.width]="tuitionPaidPercent + '%'"></div>
+    </div>
+    <div class="trend text-muted">{{ tuitionPaidPercent }}% Covered by Aid ({{ currentTerm.aid_applied | currency }})</div>
+  </div>
+  
+  <!-- Dining Dollars -->
+  <div class="glass-panel stat-card">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <h3>Dining Dollars</h3>
+      <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" (click)="toggleUpdateDining()">Update</button>
+    </div>
+    
+    <div *ngIf="!isUpdatingDining">
+      <div class="metric-value">{{ currentTerm.dining_dollars_bal | currency }}</div>
+      <div class="trend positive">You are under budget</div>
+    </div>
+
+    <form *ngIf="isUpdatingDining" [formGroup]="diningForm" (ngSubmit)="submitDiningUpdate()" style="margin-top: 1rem;">
+      <div class="form-group" style="display: flex; gap: 0.5rem;">
+        <input type="number" formControlName="new_balance" class="form-control" placeholder="New Balance">
+        <button type="submit" class="btn btn-primary" [disabled]="!diningForm.valid">Save</button>
+        <button type="button" class="btn btn-secondary" (click)="toggleUpdateDining()">X</button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="glass-panel stat-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(230, 81, 0, 0.1), transparent);">
+    <h3>🍔 Dining Dollars Calculator</h3>
+    <p class="text-muted" style="margin-bottom: 1rem;">Based on your semester end date, here is how much you can safely spend on food per day without running out of Dining Dollars.</p>
+    
+    <div style="display: flex; gap: 2rem; align-items: center;">
+      <div>
+        <div class="metric-value" style="font-size: 2.5rem; color: #E65100;">
+          {{ diningData?.safe_daily_spend | currency }}
+        </div>
+        <div class="trend text-muted">Safe Daily Spend</div>
+      </div>
+      
+      <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 2rem;">
+        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">
+          <strong>Total Balance:</strong> {{ diningData?.dining_dollars | currency }}
+        </div>
+        <div style="font-size: 1.2rem;">
+          <strong>Days Remaining:</strong> {{ diningData?.days_remaining }} days
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Student Loans -->
+  <div class="glass-panel stat-card warning-card">
+    <h3>Est. Total Student Debt</h3>
+    <div class="metric-value">$32,500.00</div>
+    <div class="trend text-muted">Federal Subsidized & Unsubsidized</div>
+  </div>
+</div>

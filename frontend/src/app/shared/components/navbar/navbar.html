@@ -1,0 +1,24 @@
+<aside class="floating-sidebar">
+  <div class="logo">
+    <a routerLink="/" style="text-decoration: none; color: inherit;">
+      <h2>The College Wallet</h2>
+    </a>
+  </div>
+  
+  <nav class="nav-menu">
+    <a routerLink="/" fragment="home" class="nav-link" [class.active]="activeSection === 'home'">
+      <span class="nav-icon">🏠</span> Home
+    </a>
+    <a routerLink="/" fragment="features" class="nav-link" [class.active]="activeSection === 'features'">
+      <span class="nav-icon">✨</span> Features
+    </a>
+    <a routerLink="/" fragment="about" class="nav-link" [class.active]="activeSection === 'about'">
+      <span class="nav-icon">📖</span> About Us
+    </a>
+  </nav>
+
+  <div class="auth-buttons">
+    <a routerLink="/login" class="nav-link">Sign In</a>
+    <a routerLink="/register" class="btn-signup">Get Started</a>
+  </div>
+</aside>
