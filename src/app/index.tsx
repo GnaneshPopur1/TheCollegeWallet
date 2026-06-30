@@ -1,21 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../config/firebase';
-
-const TRANSACTIONS = [
-  { id: '1', title: 'Chipotle Mexican Grill', amount: '-$12.50', date: 'Today', type: 'expense', icon: '🌯' },
-  { id: '2', title: 'Venmo from Alex', amount: '+$25.00', date: 'Yesterday', type: 'income', icon: '💸' },
-  { id: '3', title: 'Spotify Premium', amount: '-$5.99', date: 'Sep 24', type: 'expense', icon: '🎵' },
-  { id: '4', title: 'Campus Bookstore', amount: '-$124.00', date: 'Sep 20', type: 'expense', icon: '📚' },
-  { id: '5', title: 'Dad (Allowance)', amount: '+$150.00', date: 'Sep 15', type: 'income', icon: '🏦' },
-];
+import { Transaction, subscribeToUserTransactions, addTransaction, calculateBalance } from '../services/transactionService';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balance, setBalance] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Listen to real-time updates from Firestore
+    const unsubscribe = subscribeToUserTransactions(user.uid, (data) => {
+      setTransactions(data);
+      setBalance(calculateBalance(data));
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleSignOut = () => {
     auth.signOut();
+  };
+
+  const handleAddTestMoney = async () => {
+    if (!user) return;
+    const amount = Math.floor(Math.random() * 50) + 10; // Random amount between 10 and 60
+    await addTransaction(user.uid, 'Venmo from Mom', amount, 'income', '💸');
+  };
+
+  const handleAddTestExpense = async () => {
+    if (!user) return;
+    const amount = Math.floor(Math.random() * 20) + 5; // Random amount between 5 and 25
+    await addTransaction(user.uid, 'Campus Coffee', amount, 'expense', '☕');
   };
 
   return (
@@ -39,7 +58,7 @@ export default function DashboardScreen() {
         {/* BALANCE CARD */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>$438.50</Text>
+          <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
           <Text style={styles.cardNumber}>**** **** **** 1920</Text>
           
           <View style={styles.circlesContainer}>
@@ -50,11 +69,11 @@ export default function DashboardScreen() {
 
         {/* QUICK ACTIONS */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleAddTestExpense}>
             <View style={styles.actionIconContainer}>
               <Text style={styles.actionIcon}>💸</Text>
             </View>
-            <Text style={styles.actionText}>Send</Text>
+            <Text style={styles.actionText}>Test Spend</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
@@ -64,11 +83,11 @@ export default function DashboardScreen() {
             <Text style={styles.actionText}>Request</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleAddTestMoney}>
             <View style={styles.actionIconContainer}>
               <Text style={styles.actionIcon}>➕</Text>
             </View>
-            <Text style={styles.actionText}>Add</Text>
+            <Text style={styles.actionText}>Add Money</Text>
           </TouchableOpacity>
         </View>
 
@@ -81,7 +100,11 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          {TRANSACTIONS.map((tx) => (
+          {transactions.length === 0 && (
+            <Text style={{color: '#94a3b8', textAlign: 'center', marginTop: 20}}>No transactions yet. Click 'Add Money'!</Text>
+          )}
+
+          {transactions.map((tx) => (
             <View key={tx.id} style={styles.transactionItem}>
               <View style={styles.txLeft}>
                 <View style={styles.txIconContainer}>
@@ -89,11 +112,13 @@ export default function DashboardScreen() {
                 </View>
                 <View>
                   <Text style={styles.txTitle}>{tx.title}</Text>
-                  <Text style={styles.txDate}>{tx.date}</Text>
+                  <Text style={styles.txDate}>
+                    {tx.date?.toDate ? tx.date.toDate().toLocaleDateString() : 'Just now'}
+                  </Text>
                 </View>
               </View>
               <Text style={[styles.txAmount, tx.type === 'income' ? styles.txIncome : styles.txExpense]}>
-                {tx.amount}
+                {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
               </Text>
             </View>
           ))}
