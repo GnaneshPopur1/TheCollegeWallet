@@ -1,0 +1,213 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Platform, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { addTransaction } from '../services/transactionService';
+
+export default function RequestScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
+  
+  const [amount, setAmount] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [memo, setMemo] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRequest = async () => {
+    if (!amount || !recipient || !user) return;
+    
+    setLoading(true);
+    try {
+      const numericAmount = parseFloat(amount);
+      const title = memo ? `From ${recipient}: ${memo}` : `Requested from ${recipient}`;
+      
+      // For demonstration in V1, we log this as instant income.
+      await addTransaction(user.uid, title, numericAmount, 'income', '📥');
+      
+      // Navigate back to the dashboard upon success
+      router.back();
+    } catch (error) {
+      console.error("Failed to request money", error);
+      alert("Failed to request money. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isFormValid = amount.length > 0 && recipient.length > 0 && !isNaN(parseFloat(amount));
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Request Money</Text>
+          <View style={{ width: 60 }} /> {/* Placeholder to center title */}
+        </View>
+
+        {/* Amount Input */}
+        <View style={styles.amountContainer}>
+          <Text style={styles.currencySymbol}>$</Text>
+          <TextInput
+            style={styles.amountInput}
+            keyboardType="decimal-pad"
+            placeholder="0.00"
+            placeholderTextColor="rgba(248, 250, 252, 0.3)"
+            value={amount}
+            onChangeText={setAmount}
+            autoFocus
+          />
+        </View>
+
+        {/* Form Fields */}
+        <View style={styles.formContainer}>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>From:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Name or @username"
+              placeholderTextColor="#64748b"
+              value={recipient}
+              onChangeText={setRecipient}
+            />
+          </View>
+          
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>For:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="What's this for? (e.g. Internet Bill 🌐)"
+              placeholderTextColor="#64748b"
+              value={memo}
+              onChangeText={setMemo}
+            />
+          </View>
+        </View>
+
+        {/* Submit Button */}
+        <View style={styles.footer}>
+          <TouchableOpacity 
+            style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]} 
+            onPress={handleRequest}
+            disabled={!isFormValid || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#0f172a" />
+            ) : (
+              <Text style={styles.submitButtonText}>Request Money</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  container: {
+    flex: 1,
+    padding: 24,
+    paddingTop: Platform.OS === 'android' ? 40 : 24,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+    width: 60,
+  },
+  backButtonText: {
+    color: '#4ade80', // Green accent
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#f8fafc',
+  },
+  amountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  currencySymbol: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#f8fafc',
+    marginRight: 8,
+    marginTop: -8, // slight adjustment to align with text input
+  },
+  amountInput: {
+    fontSize: 64,
+    fontWeight: '800',
+    color: '#f8fafc',
+    minWidth: 100,
+    textAlign: 'center',
+  },
+  formContainer: {
+    backgroundColor: '#1e293b',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  inputLabel: {
+    width: 50,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#94a3b8',
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#f8fafc',
+  },
+  footer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginBottom: 20,
+  },
+  submitButton: {
+    backgroundColor: '#4ade80', // Green accent
+    padding: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#4ade80',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#334155',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitButtonText: {
+    color: '#0f172a',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});

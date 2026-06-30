@@ -78,7 +78,7 @@ export default function DashboardScreen() {
             <Text style={styles.actionText}>Send</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/request')}>
             <View style={styles.actionIconContainer}>
               <Text style={styles.actionIcon}>📥</Text>
             </View>
