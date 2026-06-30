@@ -28,6 +28,41 @@ export const addTransaction = async (userId: string, title: string, amount: numb
   }
 };
 
+import { writeBatch, doc } from 'firebase/firestore';
+
+export const sendP2PMoney = async (senderId: string, recipientId: string, amount: number, memo: string, senderName: string, recipientName: string) => {
+  try {
+    const batch = writeBatch(db);
+    
+    // 1. Sender Expense Transaction
+    const senderTxRef = doc(collection(db, 'transactions'));
+    batch.set(senderTxRef, {
+      userId: senderId,
+      title: `Paid ${recipientName}: ${memo}`,
+      amount: amount,
+      type: 'expense',
+      icon: '💸',
+      date: serverTimestamp()
+    });
+
+    // 2. Recipient Income Transaction
+    const recipientTxRef = doc(collection(db, 'transactions'));
+    batch.set(recipientTxRef, {
+      userId: recipientId,
+      title: `From ${senderName}: ${memo}`,
+      amount: amount,
+      type: 'income',
+      icon: '💰',
+      date: serverTimestamp()
+    });
+
+    await batch.commit();
+  } catch (e) {
+    console.error("Error in P2P transaction: ", e);
+    throw e;
+  }
+};
+
 export const subscribeToUserTransactions = (userId: string, callback: (transactions: Transaction[]) => void) => {
   const q = query(
     collection(db, 'transactions'),

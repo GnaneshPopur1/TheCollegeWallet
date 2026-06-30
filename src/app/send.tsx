@@ -1,30 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Platform, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
-import { addTransaction } from '../services/transactionService';
+import { sendP2PMoney } from '../services/transactionService';
 
 export default function SendScreen() {
   const router = useRouter();
+  const { recipientId, recipientName } = useLocalSearchParams<{ recipientId: string, recipientName: string }>();
   const { user } = useAuth();
   
   const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState('');
   const [memo, setMemo] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // If no recipient is passed (e.g., navigated here directly), go back to search
+  useEffect(() => {
+    if (!recipientId) {
+      alert("Please select a recipient first.");
+      router.replace('/search');
+    }
+  }, [recipientId]);
+
   const handleSend = async () => {
-    if (!amount || !recipient || !user) return;
+    if (!amount || !recipientId || !user) return;
     
     setLoading(true);
     try {
       const numericAmount = parseFloat(amount);
-      const title = memo ? `Paid ${recipient}: ${memo}` : `Paid ${recipient}`;
+      const memoText = memo || 'No memo';
       
-      await addTransaction(user.uid, title, numericAmount, 'expense', '💸');
+      await sendP2PMoney(
+        user.uid, 
+        recipientId, 
+        numericAmount, 
+        memoText, 
+        user.displayName || user.email || 'Someone', 
+        recipientName || 'Friend'
+      );
       
       // Navigate back to the dashboard upon success
-      router.back();
+      router.replace('/');
     } catch (error) {
       console.error("Failed to send money", error);
       alert("Failed to send money. Please try again.");
@@ -33,7 +48,7 @@ export default function SendScreen() {
     }
   };
 
-  const isFormValid = amount.length > 0 && recipient.length > 0 && !isNaN(parseFloat(amount));
+  const isFormValid = amount.length > 0 && !isNaN(parseFloat(amount));
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -66,13 +81,7 @@ export default function SendScreen() {
         <View style={styles.formContainer}>
           <View style={styles.inputWrapper}>
             <Text style={styles.inputLabel}>To:</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Name or @username"
-              placeholderTextColor="#64748b"
-              value={recipient}
-              onChangeText={setRecipient}
-            />
+            <Text style={styles.textInputDisabled}>{recipientName || 'Select a user'}</Text>
           </View>
           
           <View style={styles.inputWrapper}>
@@ -182,6 +191,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#f8fafc',
+  },
+  textInputDisabled: {
+    flex: 1,
+    fontSize: 16,
+    color: '#94a3b8',
+    fontWeight: '500',
   },
   footer: {
     flex: 1,

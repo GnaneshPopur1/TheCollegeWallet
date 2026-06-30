@@ -65,7 +65,7 @@ export default function DashboardScreen() {
 
         {/* QUICK ACTIONS */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/send')}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/search')}>
             <View style={styles.actionIconContainer}>
               <Text style={styles.actionIcon}>💸</Text>
             </View>
