@@ -23,10 +23,6 @@ export default function DashboardScreen() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleSignOut = () => {
-    auth.signOut();
-  };
-
   const handleAddTestMoney = async () => {
     if (!user) return;
     const amount = Math.floor(Math.random() * 50) + 10; // Random amount between 10 and 60
@@ -49,7 +45,7 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>Welcome back,</Text>
             <Text style={styles.username}>{user?.displayName || 'Student'}</Text>
           </View>
-          <TouchableOpacity onPress={handleSignOut}>
+          <TouchableOpacity onPress={() => router.push('/profile')}>
             <Image 
               source={{ uri: user?.photoURL || 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix' }} 
               style={styles.avatar} 
