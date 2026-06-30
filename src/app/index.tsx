@@ -6,6 +6,7 @@ import { Transaction, subscribeToUserTransactions, addTransaction, calculateBala
 import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState(0);
