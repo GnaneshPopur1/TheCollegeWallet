@@ -28,7 +28,8 @@ const CheckoutForm = ({ amount, onSuccess }: { amount: number, onSuccess: () => 
 
     try {
       // 1. Fetch Payment Intent from our backend
-      const response = await fetch('http://localhost:4242/create-payment-intent', {
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4242';
+      const response = await fetch(`${API_URL}/create-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
