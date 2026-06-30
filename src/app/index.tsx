@@ -24,9 +24,7 @@ export default function DashboardScreen() {
   }, [user]);
 
   const handleAddTestMoney = async () => {
-    if (!user) return;
-    const amount = Math.floor(Math.random() * 50) + 10; // Random amount between 10 and 60
-    await addTransaction(user.uid, 'Venmo from Mom', amount, 'income', '💸');
+    router.push('/add-money');
   };
 
   const handleAddTestExpense = async () => {
