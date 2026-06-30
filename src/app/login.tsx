@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 import { auth } from '../config/firebase';
 import { 
   GithubAuthProvider, 
   GoogleAuthProvider, 
-  OAuthProvider, 
   signInWithPopup, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
 } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
@@ -16,8 +17,15 @@ export default function LoginScreen() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   
+  const [authView, setAuthView] = useState<'default' | 'phone' | 'otp'>('default');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -27,6 +35,7 @@ export default function LoginScreen() {
     }
   }, [user, authLoading]);
 
+  // Handle standard social logins
   const handleGitHubLogin = async () => {
     setErrorMsg('');
     const provider = new GithubAuthProvider();
@@ -49,20 +58,6 @@ export default function LoginScreen() {
         await signInWithPopup(auth, provider);
       } else {
         alert("Native Google auth requires expo-auth-session setup.");
-      }
-    } catch (error: any) {
-      setErrorMsg(error.message);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    setErrorMsg('');
-    const provider = new OAuthProvider('apple.com');
-    try {
-      if (Platform.OS === 'web') {
-        await signInWithPopup(auth, provider);
-      } else {
-        alert("Native Apple auth requires expo-auth-session setup.");
       }
     } catch (error: any) {
       setErrorMsg(error.message);
@@ -101,6 +96,69 @@ export default function LoginScreen() {
     }
   };
 
+  // --- Phone Authentication Flow ---
+  
+  const setupRecaptcha = () => {
+    if (Platform.OS === 'web') {
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible'
+        });
+      }
+    }
+  };
+
+  const handleSendCode = async () => {
+    if (!phoneNumber) {
+      setErrorMsg('Please enter a valid phone number with country code (e.g. +16505551234)');
+      return;
+    }
+    setErrorMsg('');
+    setLoading(true);
+    
+    try {
+      if (Platform.OS === 'web') {
+        setupRecaptcha();
+        const appVerifier = (window as any).recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+        setConfirmationResult(result);
+        setAuthView('otp');
+      } else {
+        alert("Native Phone auth requires specific setup.");
+      }
+    } catch (error: any) {
+      console.error(error);
+      setErrorMsg(error.message || 'Failed to send SMS.');
+      // Reset recaptcha
+      if (Platform.OS === 'web' && (window as any).recaptchaVerifier) {
+         (window as any).recaptchaVerifier.render().then((widgetId: any) => {
+            (window as any).grecaptcha.reset(widgetId);
+         });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      setErrorMsg('Please enter the verification code.');
+      return;
+    }
+    setErrorMsg('');
+    setLoading(true);
+    
+    try {
+      await confirmationResult.confirm(verificationCode);
+      // Success will automatically update auth state and route away
+    } catch (error: any) {
+      setErrorMsg('Invalid code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.glassCard}>
@@ -110,64 +168,119 @@ export default function LoginScreen() {
         <Text style={styles.title}>TheCollegeWallet</Text>
         <Text style={styles.subtitle}>Manage your finances effortlessly.</Text>
         
-        {/* Email/Password Auth */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email Address"
-            placeholderTextColor="#64748b"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#64748b"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
-
         {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
-        <View style={styles.emailButtonContainer}>
-          <TouchableOpacity 
-            style={[styles.primaryButton, { flex: 1, marginRight: 8 }]} 
-            onPress={handleEmailSignIn}
-            disabled={loading}
-          >
-            {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.primaryButtonText}>Log In</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.secondaryButton, { flex: 1, marginLeft: 8 }]} 
-            onPress={handleEmailSignUp}
-            disabled={loading}
-          >
-            <Text style={styles.secondaryButtonText}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
+        {authView === 'default' && (
+          <View style={{ width: '100%' }}>
+            {/* Email/Password Auth */}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor="#64748b"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#64748b"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
-          <View style={styles.dividerLine} />
-        </View>
+            <View style={styles.emailButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.primaryButton, { flex: 1, marginRight: 8 }]} 
+                onPress={handleEmailSignIn}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.primaryButtonText}>Log In</Text>}
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.secondaryButton, { flex: 1, marginLeft: 8 }]} 
+                onPress={handleEmailSignUp}
+                disabled={loading}
+              >
+                <Text style={styles.secondaryButtonText}>Create Account</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Social Auth */}
-        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={handleGoogleLogin}>
-          <Text style={styles.googleButtonText}>Google</Text>
-        </TouchableOpacity>
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-        <TouchableOpacity style={[styles.socialButton, styles.appleButton]} onPress={handleAppleLogin}>
-          <Text style={styles.appleButtonText}>Apple</Text>
-        </TouchableOpacity>
+            {/* Social Auth */}
+            <TouchableOpacity style={[styles.socialButton, styles.phoneButton]} onPress={() => setAuthView('phone')}>
+              <Text style={styles.phoneButtonText}>Phone Number</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.socialButton, styles.githubButton]} onPress={handleGitHubLogin}>
-          <Text style={styles.githubButtonText}>GitHub</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={handleGoogleLogin}>
+              <Text style={styles.googleButtonText}>Google</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.socialButton, styles.githubButton]} onPress={handleGitHubLogin}>
+              <Text style={styles.githubButtonText}>GitHub</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {authView === 'phone' && (
+          <View style={{ width: '100%', alignItems: 'center' }}>
+             <Text style={styles.stepTitle}>Enter Phone Number</Text>
+             <Text style={styles.stepSubtitle}>Include your country code (e.g. +1)</Text>
+             
+             <TextInput
+                style={[styles.input, { width: '100%', textAlign: 'center', fontSize: 20 }]}
+                placeholder="+1 555 555 1234"
+                placeholderTextColor="#64748b"
+                keyboardType="phone-pad"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+              />
+
+              <TouchableOpacity style={[styles.primaryButton, { width: '100%', marginBottom: 16 }]} onPress={handleSendCode} disabled={loading}>
+                {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.primaryButtonText}>Send SMS Code</Text>}
+              </TouchableOpacity>
+              
+              <TouchableOpacity onPress={() => setAuthView('default')}>
+                <Text style={styles.cancelText}>Back to Email</Text>
+              </TouchableOpacity>
+              
+              <View id="recaptcha-container" style={{ marginTop: 10 }}></View>
+          </View>
+        )}
+
+        {authView === 'otp' && (
+          <View style={{ width: '100%', alignItems: 'center' }}>
+             <Text style={styles.stepTitle}>Verify Phone</Text>
+             <Text style={styles.stepSubtitle}>Enter the 6-digit code sent to {phoneNumber}</Text>
+             
+             <TextInput
+                style={[styles.input, { width: '100%', textAlign: 'center', fontSize: 24, letterSpacing: 8 }]}
+                placeholder="------"
+                placeholderTextColor="#64748b"
+                keyboardType="number-pad"
+                maxLength={6}
+                value={verificationCode}
+                onChangeText={setVerificationCode}
+              />
+
+              <TouchableOpacity style={[styles.primaryButton, { width: '100%', marginBottom: 16 }]} onPress={handleVerifyCode} disabled={loading}>
+                {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.primaryButtonText}>Verify & Log In</Text>}
+              </TouchableOpacity>
+              
+              <TouchableOpacity onPress={() => setAuthView('phone')}>
+                <Text style={styles.cancelText}>Use a different number</Text>
+              </TouchableOpacity>
+          </View>
+        )}
 
       </View>
     </ScrollView>
@@ -221,6 +334,18 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     textAlign: 'center',
   },
+  stepTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#f8fafc',
+    marginBottom: 8,
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: '#94a3b8',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   inputContainer: {
     width: '100%',
     marginBottom: 16,
@@ -269,6 +394,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  cancelText: {
+    color: '#94a3b8',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -303,10 +433,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  appleButton: {
-    backgroundColor: '#000',
+  phoneButton: {
+    backgroundColor: '#10b981', // Green color for phone
   },
-  appleButtonText: {
+  phoneButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
