@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaVi
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../config/firebase';
 import { Transaction, subscribeToUserTransactions, addTransaction, calculateBalance } from '../services/transactionService';
+import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
@@ -69,11 +70,11 @@ export default function DashboardScreen() {
 
         {/* QUICK ACTIONS */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleAddTestExpense}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/send')}>
             <View style={styles.actionIconContainer}>
               <Text style={styles.actionIcon}>💸</Text>
             </View>
-            <Text style={styles.actionText}>Test Spend</Text>
+            <Text style={styles.actionText}>Send</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
