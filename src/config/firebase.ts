@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 // TODO: Replace with your actual Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDixl6yUfaWO1WdrH4ygSUDLJa7mEkf6Eg",
+  apiKey: "AIzaSyDixl6yUfaW01WdrH4ygSUDLJa7mEkf6Eg",
   authDomain: "thecollegewallet-136ee.firebaseapp.com",
   projectId: "thecollegewallet-136ee",
   storageBucket: "thecollegewallet-136ee.firebasestorage.app",
